@@ -1,0 +1,1249 @@
+-- Basic Framework Plugin
+-- by QSC
+-- October 2020
+
+-- Information block for the plugin
+PluginInfo = {
+  Name = "Logic Masters~Novastar~VX Pro Videowall Controller",
+  Version = "1.0",
+  BuildVersion = "1.0.0.64",
+  Id = "e2b65b8a-995f-4032-950d-363f67694c5d",
+  Author = "Logic Masters",
+  Description = "Novastar VX Pro",
+  ShowDebug = true
+}
+
+-- Define the color of the plugin object in the design
+function GetColor(props)
+  return { 73, 127, 191 }
+end
+
+local Colors = {
+  White = {255, 255, 255}, 
+  Black = {0, 0, 0}, 
+  Red = {255, 0, 0}, 
+  Green = {0, 255, 0}, 
+  LtGreen = {66,250,5},  
+  Gray = {75, 78, 79}, 
+  DkGray = {71, 71, 69}, 
+  LtGray = {191, 190, 189}, 
+  LtBlue = {0,168,236}, 
+  DkBlue = {2,47,85}, 
+  BrightBlue = {5, 245, 245}, 
+  Red = {169,0,23}, 
+  Orange = {255, 165, 0},  
+  Yellow = {250,245,25},
+  OpsGreen = {0,133,49},  
+  StrokeBlue = {0,156,218},
+  Background = {255, 255, 255}, 
+  Background1 = {228, 228, 228},
+  Background2 = {169, 169, 167},
+  Background3 = {176, 196, 222},
+  NoColor = {0,0,0,0}, 
+  testColor = {255,0,0}
+}
+
+-- The name that will initially display when dragged into a design
+function GetPrettyName(props)
+  return "Novastar VX Pro, v" .. PluginInfo.Version
+end
+
+-- Define User configurable Properties of the plugin
+function GetProperties()
+  local props = {}
+  return props
+end
+
+-- Defines the Controls used within the plugin
+function GetControls(props)
+  local ctrls = {}
+  table.insert(ctrls, {
+    Name = "Model", 
+    ControlType = "Text", 
+    PinStyle = "None", 
+    Count = 1, 
+    UserPin = false
+  })
+  table.insert(ctrls, {
+    Name = "Host", 
+    ControlType = "Text", 
+    PinStyle = "None", 
+    Count = 1, 
+    UserPin = false
+  })
+  table.insert(ctrls, {
+    Name = "Port", 
+    ControlType = "Text", 
+    PinStyle = "None", 
+    Count = 1, 
+    UserPin = false
+  })
+  table.insert(ctrls, {
+    Name = "Status", 
+    ControlType = "Indicator", 
+    IndicatorType = "Status",
+    PinStyle = "None", 
+    Count = 1, 
+    UserPin = false
+  })
+  table.insert(ctrls, {
+    Name = "Power",  
+    ControlType = "Button", 
+    ButtonType = "Toggle", 
+    PinStyle = "Input", 
+    Count = 1, 
+    UserPin = true
+  })
+  table.insert(ctrls, {
+    Name        = "Input", 
+    ControlType = "Button", 
+    ButtonType  = "Momentary", 
+    PinStyle    = "Input", 
+    Count       = 11, 
+    UserPin     = true
+  })
+  table.insert(ctrls, {
+    Name        = "PresetRecall", 
+    ControlType = "Button", 
+    ButtonType  = "Momentary", 
+    PinStyle    = "Input", 
+    Count       = 8, 
+    UserPin     = true
+  })
+  table.insert(ctrls, {
+    Name        = "PresetDelete", 
+    ControlType = "Button", 
+    ButtonType  = "Momentary", 
+    PinStyle    = "Input", 
+    Count       = 8, 
+    UserPin     = true
+  })
+  table.insert(ctrls, {
+    Name        = "TestPatterns", 
+    ControlType = "Button", 
+    ButtonType  = "Momentary", 
+    PinStyle    = "Input", 
+    Count       = 13, 
+    UserPin     = true
+  })
+  table.insert(ctrls, {
+    Name        = "BrightnessPresets", 
+    ControlType = "Button", 
+    ButtonType  = "Momentary", 
+    PinStyle    = "Input", 
+    Count       = 5, 
+    UserPin     = true
+  })
+  table.insert(ctrls, {
+    Name = "BrightnessDefault", 
+    ControlType = "Knob", 
+    ControlUnit = "Integer",
+    Min = 0,                         -- minimum value for knob
+    Max = 255,                       -- maximum value for knob
+    DefaultValue = "100",
+    PinStyle = "None", 
+    Count = 1, 
+    UserPin = false
+  })
+  table.insert(ctrls, {
+    Name = "Brightness", 
+    ControlType = "Knob", 
+    ControlUnit = "Integer",
+    Min = 0,                         -- minimum value for knob
+    Max = 255,                       -- maximum value for knob
+    PinStyle = "None", 
+    Count = 1, 
+    UserPin = false
+  })
+  return ctrls
+end
+
+--Layout of controls and graphics for the plugin UI to display
+function GetControlLayout(props)
+  local layout = {}
+  local graphics = {}
+  inputLabels = {"HDMI 1", "HDMI 2", "HDMI 3", "HDMI 4", "HDMI 5", "HDMI 6", "Display Port", "3G/12G SDI", "USB 3.0", "Optical 1", "Optical 2"}
+  patterns = {"Normal", "Freeze", "FTB", "V Bars", "H Bars", "Chessboard", "Grid", "Crosshatch", "Full Black", "Red", "Green", "Blue", "White"}
+  values = {"0%", "25%", "50%", "75%", "100%"}
+  
+  table.insert( graphics, 
+  { 
+    Type = "GroupBox",          -- background 
+    Fill = Colors.Background, 
+    CornerRadius = 8,
+    StrokeColor = Colors.StrokeBlue, 
+    StrokeWidth = 2, 
+    Position = {0, 0}, 
+    Size = {763,408} 
+  }
+  )
+  table.insert( graphics, 
+  { 
+    Type = "GroupBox",   -- Connection area
+    Fill = {0,0,0,0}, 
+    CornerRadius = 8,
+    StrokeColor = Colors.StrokeBlue, 
+    StrokeWidth = 2, 
+    Position = {9,25}, 
+    Size = {430,87} 
+  }
+  )
+  table.insert( graphics, 
+  { 
+    Type = "GroupBox",  -- Inputs area
+    Fill = {0,0,0,0}, 
+    CornerRadius = 8,
+    StrokeColor = Colors.StrokeBlue, 
+    StrokeWidth = 2, 
+    Position = {9,127}, 
+    Size = {430,81}
+  }
+  )
+  table.insert( graphics, 
+  { 
+    Type = "GroupBox",  -- Brightness area
+    Fill = {0,0,0,0}, 
+    CornerRadius = 8,
+    StrokeColor = Colors.StrokeBlue, 
+    StrokeWidth = 2, 
+    Position = {9,220}, 
+    Size = {430,168}
+  }
+  )
+  table.insert( graphics, 
+  { 
+    Type = "GroupBox",  -- Presets area
+    Fill = {0,0,0,0}, 
+    CornerRadius = 8,
+    StrokeColor = Colors.StrokeBlue, 
+    StrokeWidth = 2, 
+    Position = {449,25}, 
+    Size = {296,183}
+  }
+  )
+  table.insert( graphics, 
+  { 
+    Type = "GroupBox",  -- Test Patterns area
+    Fill = {0,0,0,0}, 
+    CornerRadius = 8,
+    StrokeColor = Colors.StrokeBlue, 
+    StrokeWidth = 2, 
+    Position = {449,220}, 
+    Size = {296,168}
+  }
+  )
+  table.insert( graphics,
+  {
+    Type = "Text",
+    Text = "Novestar VX Pro Videowall Controller",
+    Font = "Open Sans",
+    FontSize = 12,
+    FontStyle = "Semibold",
+    HTextAlign = "Center",
+    Color = Colors.Black,
+    Fill = {0,0,0,0},
+    Position = {248,4},
+    Size = {268,17}
+  }
+  )
+  table.insert( graphics,
+  {
+    Type = "Text",
+    Text = "Copyright(c) Logic Masters Ltd 2023",
+    Font = "Open Sans",
+    FontSize = 10,
+    HTextAlign = "Centre",
+    Color = Colors.Black,
+    Fill = {0,0,0,0},
+    Position = {508,390},
+    Size = {178,15}
+  }
+  )
+  table.insert( graphics,
+  {
+    Type = "Text",
+    Text = "www.logic-masters.com | email: info@logic-masters.com",
+    Font = "Open Sans",
+    FontSize = 10,
+    HTextAlign = "Centre",
+    Color = Colors.Black,
+    Fill = {0,0,0,0},
+    Position = {76,390},
+    Size = {296,15}
+  }
+  )
+  table.insert( graphics,
+  {
+    Type = "Text",
+    Text = "Novastar Model",
+    Font = "Open Sans",
+    FontSize = 10,
+    FontStyle = "Semibold",
+    HTextAlign = "Centre",
+    Color = Colors.Black,
+    Fill = {0,0,0,0},
+    Position = {16,31},
+    Size = {85,17}
+  }
+  )
+  table.insert( graphics,
+  {
+    Type = "Text",
+    Text = "IP Address",
+    Font = "Open Sans",
+    FontSize = 10,
+    FontStyle = "Semibold",
+    HTextAlign = "Left",
+    Color = Colors.Black,
+    Fill = {0,0,0,0},
+    Position = {114,31},
+    Size = {85,17}
+  }
+  )
+  table.insert( graphics,
+  {
+    Type = "Text",
+    Text = "Port",
+    Font = "Open Sans",
+    FontSize = 10,
+    FontStyle = "Semibold",
+    HTextAlign = "Left",
+    Color = Colors.Black,
+    Fill = {0,0,0,0},
+    Position = {204,31},
+    Size = {43,17}
+  }
+  )
+  table.insert( graphics,
+  {
+    Type = "Text",
+    Text = "Power (Brightness)",
+    Font = "Open Sans",
+    FontSize = 10,
+    FontStyle = "Semibold",
+    HTextAlign = "Left",
+    Color = Colors.Black,
+    Fill = {0,0,0,0},
+    Position = {296,31},
+    Size = {133,17}
+  }
+  )
+  table.insert( graphics,
+  {
+    Type = "Text",
+    Text = "Brightness Level",
+    Font = "Open Sans",
+    FontSize = 10,
+    FontStyle = "Semibold",
+    HTextAlign = "Center",
+    Color = Colors.Black,
+    Fill = {0,0,0,0},
+    Position = {177,225},
+    Size = {95,17}
+  }
+  )
+  table.insert( graphics,
+  {
+    Type = "Text",
+    Text = "Recall Presets",
+    Font = "Open Sans",
+    FontSize = 10,
+    FontStyle = "Semibold",
+    HTextAlign = "Center",
+    Color = Colors.Black,
+    Fill = {0,0,0,0},
+    Position = {550,31},
+    Size = {95,17}
+  }
+  )
+  table.insert( graphics,
+  {
+    Type = "Text",
+    Text = "Delete Presets",
+    Font = "Open Sans",
+    FontSize = 10,
+    FontStyle = "Semibold",
+    HTextAlign = "Center",
+    Color = Colors.Black,
+    Fill = {0,0,0,0},
+    Position = {550,123},
+    Size = {95,17}
+  }
+  )
+  table.insert( graphics,
+  {
+    Type = "Text",
+    Text = "Test Patterns",
+    Font = "Open Sans",
+    FontSize = 10,
+    FontStyle = "Semibold",
+    HTextAlign = "Center",
+    Color = Colors.Black,
+    Fill = {0,0,0,0},
+    Position = {550,225},
+    Size = {95,17}
+  }
+  )
+  table.insert( graphics,
+  {
+    Type = "Text",
+    Text = "Default Brightness",
+    Font = "Open Sans",
+    FontSize = 10,
+    FontStyle = "Semibold",
+    HTextAlign = "Left",
+    Color = Colors.Black,
+    Fill = {0,0,0,0},
+    Position = {16,331},
+    Size = {95,17}
+  }
+  )
+  table.insert( graphics,
+  {
+    Type = "Text",
+    Text = "Brightness Presets",
+    Font = "Open Sans",
+    FontSize = 10,
+    FontStyle = "Semibold",
+    HTextAlign = "Left",
+    Color = Colors.Black,
+    Fill = {0,0,0,0},
+    Position = {201,331},
+    Size = {114,17}
+  }
+  )
+  table.insert( graphics,
+  {
+    Type = "Text",
+    Text = "0\rI",
+    Font = "Open Sans",
+    FontSize = 10,
+    FontStyle = "Semibold",
+    HTextAlign = "Center",
+    Color = Colors.Black,
+    Fill = {0,0,0,0},
+    Position = {37,230},
+    Size = {37,45}
+  }
+  )
+  table.insert( graphics,
+  {
+    Type = "Text",
+    Text = "I\r0%",
+    Font = "Open Sans",
+    FontSize = 10,
+    FontStyle = "Semibold",
+    HTextAlign = "Center",
+    Color = Colors.Black,
+    Fill = {0,0,0,0},
+    Position = {37,283},
+    Size = {37,45}
+  }
+  )
+  table.insert( graphics,
+  {
+    Type = "Text",
+    Text = "I\r50%",
+    Font = "Open Sans",
+    FontSize = 10,
+    FontStyle = "Semibold",
+    HTextAlign = "Center",
+    Color = Colors.Black,
+    Fill = {0,0,0,0},
+    Position = {203,286},
+    Size = {37,45}
+  }
+  )
+  table.insert( graphics,
+  {
+    Type = "Text",
+    Text = "255\rI",
+    Font = "Open Sans",
+    FontSize = 10,
+    FontStyle = "Semibold",
+    HTextAlign = "Center",
+    Color = Colors.Black,
+    Fill = {0,0,0,0},
+    Position = {368,230},
+    Size = {37,45}
+  }
+  )
+  table.insert( graphics,
+  {
+    Type = "Text",
+    Text = "I\r100%",
+    Font = "Open Sans",
+    FontSize = 10,
+    FontStyle = "Semibold",
+    HTextAlign = "Center",
+    Color = Colors.Black,
+    Fill = {0,0,0,0},
+    Position = {368,283},
+    Size = {37,45}
+  }
+  )
+  
+  ---- Controls -------------------------------------------------------------
+  
+  layout["Model"] = { 
+    PrettyName = "Novastar Model", 
+    Style = "ComboBox", 
+    Color = Colors.White, 
+    StrokeColor = Colors.StrokeBlue,
+    StrokeWidth = 2,
+    Font = "Open Sans",
+    FontSize = 12, 
+    CornerRadius = 3,
+    Position = {16,48},
+    Size = {85,24},
+  }
+  layout["Host"] = { 
+    PrettyName = "IP Address", 
+    Style = "TextBox", 
+    Color = Colors.White, 
+    StrokeColor = Colors.StrokeBlue,
+    StrokeWidth = 2, 
+    FontSize = 12, 
+    CornerRadius = 3,
+    Position = {114,48},
+    Size = {113,24}
+  }
+  layout["Port"] = { 
+    PrettyName = "TCP Port", 
+    Style = "TextBox", 
+    Color = Colors.White,
+    StrokeColor = Colors.StrokeBlue,
+    StrokeWidth = 2, 
+    FontSize = 12, 
+    CornerRadius = 3,
+    Position = {240,48},
+    Size = {43,24}
+  }
+  layout["Power"] = { 
+      PrettyName = "Power (Brightness)", 
+      Style = "Button", 
+      ButtonVisualStyle = "Flat",
+      Color = Colors.StrokeBlue,
+      UnlinkOffColor = true,
+      OffColor = Colors.White,
+      StrokeColor = Colors.StrokeBlue,
+      StrokeWidth = 2,
+      Font = "Open Sans", 
+      FontSize = 10, 
+      HTextAlign = "Centre",
+      Margin = 0,
+      CornerRadius = 3,
+      Legend = "On/Off", 
+      Position = {296,48},
+      Size = {133,24},
+    }
+    layout["Status"] = { 
+      PrettyName = "Connection Status", 
+      Style = "Text", 
+      Color = {0,0,0,0},
+      StrokeWidth = 0,
+      Font = "Open Sans", 
+      FontSize = 10, 
+      Margin = 1,
+      HTextAlign = "Left",
+      CornerRadius = 0,
+      Position = {16,82},
+      Size = {413,19},
+    }
+    for i = 1,11 do 
+      local hStart = 16
+      local row1VStart = 141
+      local row2VStart = 172
+      local gap = 70
+      if i > 0 and i < 7 then
+        vStart = row1VStart
+        x = i - 1
+      else
+        vStart = row2VStart
+        x = i - 7
+      end
+      layout["Input " .. i] = { 
+        PrettyName = "Input~" .. (i), 
+        Style = "Button", 
+        ButtonVisualStyle = "Flat",
+        Color = Colors.StrokeBlue,
+        UnlinkOffColor = true,
+        OffColor = Colors.White,
+        StrokeColor = Colors.StrokeBlue,
+        StrokeWidth = 2,
+        Font = "Open Sans", 
+        FontSize = 10, 
+        Margin = 0,
+        HTextAlign = "Centre",
+        CornerRadius = 3,
+        Legend = inputLabels[i], 
+        Position = {hStart + (x * gap), vStart},
+        Size = {63,24},
+      }
+    end
+    for i = 1,8 do 
+      local hStart = 461
+      local row1VStart = 48
+      local row2VStart = 79
+      local gap = 70
+      if i > 0 and i < 5 then
+        vStart = row1VStart
+        x = i - 1
+      else
+        vStart = row2VStart
+        x = i - 5
+      end
+      layout["PresetRecall " .. i] = { 
+        PrettyName = "Preset Recall~" .. (i), 
+        Style = "Button", 
+        ButtonVisualStyle = "Flat",
+        Color = Colors.StrokeBlue,
+        UnlinkOffColor = true,
+        OffColor = Colors.White,
+        StrokeColor = Colors.StrokeBlue,
+        StrokeWidth = 2,
+        Font = "Open Sans", 
+        FontSize = 12, 
+        Margin = 0,
+        HTextAlign = "Centre",
+        CornerRadius = 3,
+        Legend = tostring(i), 
+        Position = {hStart + (x * gap), vStart},
+        Size = {63,24},
+      }
+    end
+    for i = 1,8 do 
+      local hStart = 461
+      local row1VStart = 141
+      local row2VStart = 172
+      local gap = 70
+      if i > 0 and i < 5 then
+        vStart = row1VStart
+        x = i - 1
+      else
+        vStart = row2VStart
+        x = i - 5
+      end
+      layout["PresetDelete " .. i] = { 
+        PrettyName = "Preset Delete~" .. (i), 
+        Style = "Button", 
+        ButtonVisualStyle = "Flat",
+        Color = Colors.StrokeBlue,
+        UnlinkOffColor = true,
+        OffColor = Colors.White,
+        StrokeColor = Colors.StrokeBlue,
+        StrokeWidth = 2,
+        Font = "Open Sans", 
+        FontSize = 12, 
+        Margin = 0,
+        HTextAlign = "Centre",
+        CornerRadius = 3,
+        Legend = tostring(i), 
+        Position = {hStart + (x * gap), vStart},
+        Size = {63,24},
+      }
+    end
+    for i = 1,13 do 
+      local hStart = 461
+      local row1VStart = 242
+      local row2VStart = 273
+      local row3VStart = 304
+      local row4VStart = 335
+      local gap = 70
+      if i > 0 and i < 5 then
+        vStart = row1VStart
+        x = i - 1
+      elseif i > 4 and i < 9 then
+        vStart = row2VStart
+        x = i - 5
+      elseif i > 8 and i < 13 then
+        vStart = row3VStart
+        x = i - 9
+      else
+        vStart = row4VStart
+        x = i - 13
+      end
+      layout["TestPatterns " .. i] = { 
+        PrettyName = "Test Patterns~" .. (i), 
+        Style = "Button", 
+        ButtonVisualStyle = "Flat",
+        Color = Colors.StrokeBlue,
+        UnlinkOffColor = true,
+        OffColor = Colors.White,
+        StrokeColor = Colors.StrokeBlue,
+        StrokeWidth = 2,
+        Font = "Open Sans", 
+        FontSize = 10, 
+        Margin = 0,
+        HTextAlign = "Centre",
+        CornerRadius = 3,
+        Legend = patterns[i], 
+        Position = {hStart + (x * gap), vStart},
+        Size = {63,24},
+      }
+    end
+    layout["Brightness"] = { 
+      PrettyName = "Brightness Value", 
+      Style = "Fader",
+      FaderStyle = "Classic",
+      ShowTextbox = false,
+      Color = Colors.StrokeBlue,
+      StrokeColor = Colors.White,
+      StrokeWidth = 0, 
+      Size = {354,44},
+      Position = {44,257}
+    }
+    for i = 1,5 do 
+      local hStart = 86
+      local vStart = 353
+      local gap = 70
+      x = i - 1
+    layout["BrightnessPresets " .. i] = { 
+      PrettyName = "Brightness Presets~" .. (i), 
+      Style = "Button", 
+      ButtonVisualStyle = "Flat",
+      Color = Colors.StrokeBlue,
+      UnlinkOffColor = true,
+      OffColor = Colors.White,
+      StrokeColor = Colors.StrokeBlue,
+      StrokeWidth = 2,
+      Font = "Open Sans", 
+      FontSize = 10, 
+      Margin = 0,
+      HTextAlign = "Centre",
+      CornerRadius = 3,
+      Legend = values[i], 
+      Position = {hStart + (x * gap), vStart},
+      Size = {63,24},
+      }
+    end
+    layout["BrightnessDefault"] = { 
+    PrettyName = "Brightness Default", 
+    Style = "Meter", 
+    Color = '#ff7f00',
+    StrokeColor = Colors.StrokeBlue,
+    StrokeWidth = 2,
+    CornerRadius = 3,
+    Font = "Open Sans", 
+    FontSize = 14,  
+    Size = {63,24},
+    Position = {16,353}
+  }
+  return layout, graphics
+end
+
+--Start event based logic
+if Controls then
+  models = {"VX400", "VX600", "VX1000", "VX2000"}
+  host = ""
+  model = ""
+  port = 15200
+  cPattern = 0
+  cPreset = 0
+  layer = 1
+  socket = TcpSocket.New()
+  socket.ReadTimeout = 0
+  socket.WriteTimeout = 0
+  socket.ReconnectTimeout = 3
+  
+  InputMap = {0x01, 0x02, 0x03, 0x04, 0x05, 0x06, 0x07, 0x08, 0x09, 0x0B, 0x0D, 0x0E} --HDMI 1, HDMI 2, HDMI 3, HDMI 4, HDMI 5, HDMI 6, HDMI 7, DP, SDI, USB, OPTI 1, OPTI 2
+  LayerMap = {0x01, 0x02, 0x03, 0x04, 0x05}
+  BPresets = {0, 64, 127, 191, 255} --0, 25, 50, 75, 100%
+  
+  Commands = {
+    Preamble = {0x55, 0xAA},
+    Connect = {0x00,0x14,0xFE,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x02,0x02,0x02,0x00},
+    Connect2 = {0x00,0x00,0xFE,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x02,0x00,0x00,0x00,0x02,0x00},
+    Brightness = {0x00,0x00,0xFE,0xFF,0x01,0xFF,0xFF,0xFF,0x01,0x00,0x01,0x00,0x00,0x02,0x01,0x00},
+    MoveLayer = {0x00,0x00,0xFE,0x00,0x00,0x00,0x00,0x00,0x01,0x00,0x15,0x00,0x02,0x13,0x11,0x00},   --00 00 FE 00 00 00 00 00 01 00 15 00 02 13 11 00 xx xx xx xx xx yy yy yy yy hh hh hh hh ww ww ww ww
+    Presets = {
+      {0x00,0x00,0xFE,0x00,0x00,0x00,0x00,0x00,0x01,0x00,0x00,0x01,0x51,0x13,0x01,0x00,0x00}, --Preset 1
+      {0x00,0x00,0xFE,0x00,0x00,0x00,0x00,0x00,0x01,0x00,0x00,0x01,0x51,0x13,0x01,0x00,0x01}, --Preset 2
+      {0x00,0x00,0xFE,0x00,0x00,0x00,0x00,0x00,0x01,0x00,0x00,0x01,0x51,0x13,0x01,0x00,0x02}, --Preset 3
+      {0x00,0x00,0xFE,0x00,0x00,0x00,0x00,0x00,0x01,0x00,0x00,0x01,0x51,0x13,0x01,0x00,0x03}, --Preset 4
+      {0x00,0x00,0xFE,0x00,0x00,0x00,0x00,0x00,0x01,0x00,0x00,0x01,0x51,0x13,0x01,0x00,0x04}, --Preset 5
+      {0x00,0x00,0xFE,0x00,0x00,0x00,0x00,0x00,0x01,0x00,0x00,0x01,0x51,0x13,0x01,0x00,0x05}, --Preset 6
+      {0x00,0x00,0xFE,0x00,0x00,0x00,0x00,0x00,0x01,0x00,0x00,0x01,0x51,0x13,0x01,0x00,0x06}, --Preset 7
+      {0x00,0x00,0xFE,0x00,0x00,0x00,0x00,0x00,0x01,0x00,0x00,0x01,0x51,0x13,0x01,0x00,0x07}, --Preset 8
+    },
+    DeletePresets = {
+      {0x00,0x00,0xFE,0x00,0x00,0x00,0x00,0x00,0x01,0x00,0x04,0x01,0x51,0x13,0x01,0x00,0x00}, --Preset 1
+      {0x00,0x00,0xFE,0x00,0x00,0x00,0x00,0x00,0x01,0x00,0x04,0x01,0x51,0x13,0x01,0x00,0x01}, --Preset 2
+      {0x00,0x00,0xFE,0x00,0x00,0x00,0x00,0x00,0x01,0x00,0x04,0x01,0x51,0x13,0x01,0x00,0x02}, --Preset 3
+      {0x00,0x00,0xFE,0x00,0x00,0x00,0x00,0x00,0x01,0x00,0x04,0x01,0x51,0x13,0x01,0x00,0x03}, --Preset 4
+      {0x00,0x00,0xFE,0x00,0x00,0x00,0x00,0x00,0x01,0x00,0x04,0x01,0x51,0x13,0x01,0x00,0x04}, --Preset 5
+      {0x00,0x00,0xFE,0x00,0x00,0x00,0x00,0x00,0x01,0x00,0x04,0x01,0x51,0x13,0x01,0x00,0x05}, --Preset 6
+      {0x00,0x00,0xFE,0x00,0x00,0x00,0x00,0x00,0x01,0x00,0x04,0x01,0x51,0x13,0x01,0x00,0x06}, --Preset 7
+      {0x00,0x00,0xFE,0x00,0x00,0x00,0x00,0x00,0x01,0x00,0x04,0x01,0x51,0x13,0x01,0x00,0x07}, --Preset 8
+    },
+    TestPatterns = {
+      {0x00,0x00,0xFE,0xFF,0x00,0x00,0x00,0x00,0x01,0x00,0x50,0x00,0x20,0x02,0x01,0x00,0x00}, --Disable Freeze/FTB
+      {0x00,0x00,0xFE,0xFF,0x00,0x00,0x00,0x00,0x01,0x00,0x50,0x00,0x20,0x02,0x01,0x00,0x02}, --Freeze
+      {0x00,0x00,0xFE,0xFF,0x00,0x00,0x00,0x00,0x01,0x00,0x50,0x00,0x20,0x02,0x01,0x00,0x01}, --Fade to Black
+    }  
+  }
+  Response = {
+    Connected =       {0xAA,0x55,0x00,0x00,0x00,0xFE,0x00,0x00,0x00,0x00,0x00,0x00,0x02,0x00,0x00,0x00,0x02,0x00,0x06,0x61,0xBE,0x56},
+    ConnectedAlt =    {0xAA,0x55,0x00,0x00,0x00,0xFE,0x00,0x00,0x00,0x00,0x00,0x00,0x02,0x00,0x00,0x00,0x02,0x00,0x2a,0x61,0xE2,0x56},
+    ConnectedAlt2 =   {0xAA,0x55,0x00,0x00,0x00,0xFE,0x00,0x00,0x00,0x00,0x00,0x00,0x02,0x00,0x00,0x00,0x02,0x00,0x0e,0x62,0xC7,0x56},
+    ConnectedAlt3 =   {0xAA,0x55,0x00,0x00,0x00,0xFE,0x00,0x00,0x00,0x00,0x00,0x00,0x02,0x00,0x00,0x00,0x02,0x00,0x2A,0x62,0xE3,0x56},
+    ConnectedAlt4 =   {0xAA,0x55,0x00,0x14,0x00,0xFE,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x02,0x02,0x02,0x00,0x2A,0x62,0xF9,0x56},
+    hdmi1Active =     {0xAA,0x55,0x00,0x00,0x00,0xFE,0x00,0x00,0x00,0x00,0x01,0x00,0x13,0x03,0x00,0x00,0x00,0x00,0x69,0x57},
+    hdmi2Active =     {0xAA,0x55,0x00,0x00,0x00,0xFE,0x00,0x00,0x00,0x00,0x01,0x00,0x13,0x03,0x00,0x01,0x00,0x00,0x6A,0x57},
+    DPActive =       {0xAA,0x55,0x00,0x00,0x00,0xFE,0x00,0x00,0x00,0x00,0x01,0x00,0x13,0x03,0x00,0x02,0x00,0x00,0x6B,0x57},
+    SdiActive =       {0xAA,0x55,0x00,0x00,0x00,0xFE,0x00,0x00,0x00,0x00,0x01,0x00,0x13,0x03,0x00,0x03,0x00,0x00,0x6C,0x57},
+    PatternsValid2 =  {0xAA,0x55,0x00,0x00,0x00,0xFE,0x00,0x00,0x00,0x00,0x01,0x00,0x04,0x00,0x00,0x13,0x00,0x00,0x6B,0x56},
+    PatternsValid =   {0xAA,0x55,0x00,0x00,0xFF,0xFE,0x00,0x00,0x00,0x00,0x01,0x00,0x50,0x00,0x20,0x02,0x00,0x00,0xC5,0x57},
+    PresetsChanged =  {0xAA,0x55,0x00,0x00,0x00,0xFE,0x00,0x00,0x00,0x00,0x01,0x00,0x00,0x01,0x51,0x13,0x00,0x00,0xB9,0x56},
+  }
+  
+  function init()
+    Controls["Model"].Choices = models
+    Controls['Port'].String = "15200"
+  
+    if Controls['Host'].String ~= "" then
+      if string.match(Controls['Host'].String, "(%d+%.%d+%.%d+%.%d+)") then
+        print("Valid IP address found")
+        host = Controls['Host'].String
+        if Controls['Port'].String ~= "" then
+          port = tonumber(Controls['Port'].String)
+          setStatus(5, 'Connecting to NovaStar')
+          socket:Connect(host, port)
+        else
+          print("No port set")
+          setStatus(3, '\nPlease set Port number.')
+        end
+      else
+        print("Invalid IP address")
+        Timer.CallAfter(clearHost, 1)
+      end
+    else
+      setStatus(3, ' Please set host address.')
+    end
+  
+    if Controls["Model"].String ~= "" then
+      model = Controls["Model"].String
+    else 
+      Controls["Model"].Color = "#e3372e"
+    end
+  
+    if model == "VX400" or model == "VX600" or model == "VX1000"then
+      for i = 4,6 do 
+        Controls['Input'][i].IsDisabled = true
+      end
+      Controls['Input'][7].IsDisabled = true
+      Controls['Input'][11].IsDisabled = true
+      Controls['Input'][8].Legend = "3G SDI"
+    else 
+      for i = 4,6 do 
+        Controls['Input'][i].IsDisabled = false
+      end
+      Controls['Input'][7].IsDisabled = false
+      Controls['Input'][11].IsDisabled = false
+      Controls['Input'][8].Legend = "12G SDI"
+    end
+  
+    if Controls['Power'].Boolean == true then 
+      sendBrightness(Controls['BrightnessDefault'].Value)
+      Controls['Brightness'].Value = Controls['BrightnessDefault'].Value
+    else 
+      sendBrightness(0)
+      Controls['Brightness'].Value = 0
+    end
+  
+    for i = 4,13 do
+      Controls['TestPatterns'][i].IsDisabled = true
+    end
+  end
+  
+  setStatus = function (value, msg) 
+    -- 0 = OK
+    -- 1 = Compromised
+    -- 2 = Fault
+    -- 3 = Not Present
+    -- 4 = Missing
+    -- 5 = Initializing
+    -- >5 = Fault
+    Controls['Status'].Value = value
+    Controls['Status'].String = msg
+    print("TCP Socket Status: " .. msg)
+  end
+  
+  function clearHost()
+    Controls['Host'].String = ""
+    setStatus(3, ' Please set host address')
+  end
+  
+  function DecimalToHexBytes(num)
+    local bytes = {}
+    for i = 0, 3 do
+      local byte = math.floor(num / (256 ^ i)) % 256
+      table.insert(bytes, string.format("0x%02X", byte))
+    end
+    return bytes
+  end
+  
+  -- Appends srcTable into destTable starting at position startPos (1-based index) 
+  function AppendHexBytesAt(destTable, srcTable, startPos)
+    for i = 1, #srcTable do
+      destTable[startPos + i - 1] = srcTable[i]
+    end
+  end
+  
+  function hexdecode(str)
+    return str:gsub(".",
+      function(byte)
+        local data = " " .. string.format("%02X", string.byte(byte))
+        return data
+      end
+    )
+  end
+  
+  function hex_dump (str)
+    local len = string.len( str )
+    local dump = ""
+    local hex = ""
+    local asc = ""
+    
+    for i = 1, len do
+      if 1 == i % 8 then
+        dump = dump .. hex .. asc .. "\n"
+        hex = string.format( "%04x: ", i - 1 )
+        asc = ""
+      end
+      
+      local ord = string.byte( str, i )
+      hex = hex .. string.format( "%02x ", ord )
+      if ord >= 32 and ord <= 126 then
+        asc = asc .. string.char( ord )
+      else
+        asc = asc .. "."
+      end
+    end
+    return dump .. hex .. string.rep( "   ", 8 - len % 8 ) .. asc
+  end
+  
+  function computeChecksum(bytes)
+    local sum = 0
+    for k,v in pairs(bytes) do
+      sum = sum + v
+    end
+    sum = sum + 0x5555
+    local sum_l = sum >> 8
+    local sum_h = sum & 0xFF
+  
+    local checksum = {}
+    table.insert(checksum, sum_h)
+    table.insert(checksum, sum_l)
+    return checksum
+  end
+  
+  function getCmdString(bytes)
+    local cmd = ""
+    for k,v in pairs(bytes) do
+      cmd = cmd .. string.pack("B", v)
+    end
+    return cmd
+  end
+  
+  --------- Socket functions -----------------------------------------------
+  
+  socket.Connected = function()
+    print("TCP Connection Established to NovaStar @ " .. Controls['Host'].String)
+    sendCommand(Commands.Connect)
+  end
+  
+  socket.Reconnect = function()
+    print("TCP Socket Reconnecting?")
+    setStatus(5,"Attempting to reconnect")
+  end
+  
+  socket.Data = function ()
+    print("Reading " .. socket.BufferLength .. " Bytes")
+    local data = socket:Read(socket.BufferLength);
+    local stringData = hexdecode(data)
+    print("Response: " .. stringData)
+    --print(hex_dump(data))
+    if data == "Test" or data == getCmdString(Response.Connected) or data == getCmdString(Response.ConnectedAlt) or data == getCmdString(Response.ConnectedAlt2) or data == getCmdString(Response.ConnectedAlt3) or data == getCmdString(Response.ConnectedAlt4
+  ) then
+      print("Successful Connection Response Received")
+      setStatus(0, "Connected - Novastar " .. model .. " (" .. Controls['Host'].String .. ")")
+    elseif data == getCmdString(Response.hdmi1Active) then 
+      Controls['Input'][1].Boolean = true
+      for i = 2,11 do
+        Controls['Input'][i].Boolean = false
+      end
+    elseif data == getCmdString(Response.hdmi2Active) then 
+      Controls['Input'][2].Boolean = true
+      Controls['Input'][1].Boolean = false
+      for i = 3,11 do
+        Controls['Input'][i].Boolean = false
+      end
+    elseif data == "ADD RESPONSE STRING FOR HDMI 3" then 
+      Controls['Input'][3].Boolean = true
+      Controls['Input'][2].Boolean = false
+      Controls['Input'][1].Boolean = false
+      for i = 4,11 do
+        Controls['Input'][i].Boolean = false
+      end
+    elseif data == "ADD RESPONSE STRING FOR HDMI 4" then 
+      Controls['Input'][4].Boolean = true
+      Controls['Input'][3].Boolean = false
+      Controls['Input'][2].Boolean = false
+      Controls['Input'][1].Boolean = false
+      for i = 5,11 do
+        Controls['Input'][i].Boolean = false
+      end
+    elseif data == "ADD RESPONSE STRING FOR HDMI 5" then 
+      Controls['Input'][5].Boolean = true
+      Controls['Input'][4].Boolean = false
+      Controls['Input'][3].Boolean = false
+      Controls['Input'][2].Boolean = false
+      Controls['Input'][1].Boolean = false
+      for i = 6,11 do
+        Controls['Input'][i].Boolean = false
+      end
+    elseif data == "ADD RESPONSE STRING FOR HDMI 6" then 
+      Controls['Input'][6].Boolean = true
+      Controls['Input'][5].Boolean = false
+      Controls['Input'][4].Boolean = false
+      Controls['Input'][3].Boolean = false
+      Controls['Input'][2].Boolean = false
+      Controls['Input'][1].Boolean = false
+      for i = 7,11 do
+        Controls['Input'][i].Boolean = false
+      end
+    elseif data == getCmdString(Response.DPActive) then 
+      Controls['Input'][7].Boolean = true
+      for i = 1,6 do
+        Controls['Input'][i].Boolean = false
+      end
+      for i = 8,11 do
+        Controls['Input'][i].Boolean = false
+      end
+    elseif data == getCmdString(Response.SdiActive) then 
+      Controls['Input'][8].Boolean = true
+      for i = 1,7 do
+        Controls['Input'][i].Boolean = false
+      end
+      for i = 9,11 do
+        Controls['Input'][i].Boolean = false
+      end
+    elseif data == getCmdString(Response.PatternsValid) then
+      if cPattern ~= 0 then 
+        Controls['TestPatterns'][cPattern].Boolean = true
+        for a = 1,13 do 
+          if a ~= cPattern then 
+            Controls['TestPatterns'][a].Boolean = false 
+          end 
+        end
+      end
+    elseif data == getCmdString(Response.PresetsChanged) then
+      if cPreset ~= 0 then 
+        Controls['PresetRecall'][cPreset].Boolean = true
+        for a = 1,8 do 
+          if a ~= cPreset then 
+            Controls['PresetRecall'][a].Boolean = false 
+          end 
+        end
+      end
+    else
+      print("Ignoring response")
+    end
+  end
+  
+  socket.Closed = function()
+    print("TCP Socket Closed?")
+    setStatus(2,"Connection closed by NovaStar")
+    --Timer.CallAfter(reconnect, 10)
+    socket:Connect(host, port)
+  end
+  
+  socket.Error = function(sock, err)
+    print("TCP Socket Error: ", err)
+    setStatus(2,"Communication error with NovaStar")
+    socket:Connect(host, port)
+  end
+  
+  socket.Timeout = function(sock, err)
+    print("TCP Socket Timeout" )
+    setStatus(2,"Timeout in connection to NovaStar")
+    socket:Connect(host, port)
+  end
+  
+  --------------------------------------------------------------------------
+  function sendCommand(cmd)
+    local stringData = hexdecode(getCmdString(Commands.Preamble) .. getCmdString(cmd) .. getCmdString(computeChecksum(cmd)))
+    print("Command sent: " .. stringData)
+    if socket.IsConnected then 
+      socket:Write(getCmdString(Commands.Preamble) .. getCmdString(cmd) .. getCmdString(computeChecksum(cmd)))
+    else
+      print("Cannot send command, socket disconnected")
+    end 
+  end
+  
+  function sendBrightness(value)
+    local cmd = Commands.Brightness
+    cmd[17] = value
+    local stringData = hexdecode(getCmdString(Commands.Preamble) .. getCmdString(cmd) .. getCmdString(computeChecksum(cmd)))
+    print("Command sent: " .. stringData)
+    if socket.IsConnected then 
+      socket:Write(getCmdString(Commands.Preamble) .. getCmdString(cmd) .. getCmdString(computeChecksum(cmd)))
+    else
+      print("Cannot send command, socket disconnected")
+    end
+  end
+  
+  function setLayerInput(layer, input)
+    input_code = InputMap[input]
+    layer_code = LayerMap[layer]
+    if not input_code then 
+      print("Unknown input: "..tostring(input)) 
+    elseif layer < 1 or layer > 5 then 
+      print("Layer must be 1-5") 
+    else 
+      payload = {0x00,0x3E,0xFE,0x00,0x00,0x00,0x00,0x00,0x01,0x00,0x00,0x00,0x02,0x13,0x02,0x00,layer_code,input_code}
+      sendCommand(payload)
+    end 
+  end 
+  
+  function sendPreset(preset)
+    sendCommand(preset)
+  end
+  
+  function sendDeletePreset(preset)
+    sendCommand(preset)
+  end
+  
+  function sendTestPattern(pattern)
+    sendCommand(pattern)
+  end
+  
+  ---- Event Handlers ----------------------------------------------------------------------
+  
+  --Inputs: HDMI 1, HDMI 2, HDMI 3, HDMI 4, HDMI 5, HDMI 6, DP, SDI, USB, OPTI 1, OPTI 2
+  
+  for i = 1,11 do
+    Controls['Input'][i].EventHandler = function()
+      if Controls['Input'][i].Boolean == true then
+        setLayerInput(layer, i)
+      end
+    end 
+  end
+  
+  Controls['Brightness'].EventHandler = function()
+    sendBrightness(Controls['Brightness'].Value)
+    if Controls['Brightness'].Value > 0 then 
+      Controls['Power'].Boolean = true
+    else
+      Controls['Power'].Boolean = false 
+    end
+  end
+  
+  for i = 1,13 do 
+    Controls['TestPatterns'][i].EventHandler = function()
+      if Controls['TestPatterns'][i].Boolean == true then
+        cPattern = i
+        sendTestPattern(Commands.TestPatterns[i])
+      end
+    end
+  end
+  
+  Controls['Host'].EventHandler = function() 
+    if Controls['Host'].String ~= "" then
+      if string.match(Controls['Host'].String, "(%d+%.%d+%.%d+%.%d+)") then
+        print("Valid IP address found")
+        host = Controls['Host'].String
+        if Controls['Port'].String ~= "" then
+          port = tonumber(Controls['Port'].String)
+          setStatus(5, 'Connecting to NovaStar')
+          socket:Connect(host, port)
+        else
+          print("No port set")
+        end
+      else
+        print("Invalid IP address")
+        Timer.CallAfter(clearHost, 1)
+      end
+    else
+      setStatus(3, ' Please set host address.')
+    end
+  end
+  
+  Controls['Port'].EventHandler = function() 
+    if Controls['Port'].String ~= "" then
+      port = tonumber(Controls['Port'].String)
+      if Controls['Host'].String ~= "" then
+        host = Controls['Host'].String
+        setStatus(5, 'Connecting to NovaStar')
+        socket:Connect(host, port)
+      end
+    else
+      setStatus(3, ' Please set host address.')
+    end
+  end
+  
+  Controls['Power'].EventHandler = function()
+    if Controls['Power'].Boolean == true then 
+      sendBrightness(Controls['BrightnessDefault'].Value)
+      Controls['Brightness'].Value = Controls['BrightnessDefault'].Value
+    else 
+      sendBrightness(0)
+      Controls['Brightness'].Value = 0
+    end 
+  end
+  
+  for i = 1,8 do 
+    Controls['PresetRecall'][i].EventHandler = function()
+      if Controls['PresetRecall'][i].Boolean == true then
+        sendPreset(Commands.Presets[i])
+        cPreset = i
+      end
+    end
+  end
+  
+  for i = 1,8 do 
+    Controls['PresetDelete'][i].EventHandler = function()
+      if Controls['PresetDelete'][i].Boolean == true then
+        sendDeletePreset(Commands.DeletePresets[i])
+      end
+    end
+  end
+  
+  for i = 1,5 do
+    Controls['BrightnessPresets'][i].EventHandler = function()   
+      if Controls['BrightnessPresets'][i].Boolean == true then
+        sendBrightness(BPresets[i])
+        Controls['Brightness'].Value = BPresets[i] 
+        if i > 1 then
+          Controls['Power'].Boolean = true
+        else
+          Controls['Power'].Boolean = false
+        end
+      end
+    end
+  end
+  
+  Controls["Model"].EventHandler = function()  
+    model = Controls["Model"].String
+    if model == "VX400" or model == "VX600" or model == "VX1000"then
+      for i = 4,6 do 
+        Controls['Input'][i].IsDisabled = true
+      end
+      Controls['Input'][7].IsDisabled = true
+      Controls['Input'][11].IsDisabled = true
+      Controls['Input'][8].Legend = "3G SDI"
+    else 
+      for i = 4,6 do 
+        Controls['Input'][i].IsDisabled = false
+      end
+      Controls['Input'][7].IsDisabled = false
+      Controls['Input'][11].IsDisabled = false
+      Controls['Input'][8].Legend = "12G SDI"
+    end
+    Controls["Model"].Color = "#ffffff"
+  end
+  
+  init()
+  
+end
